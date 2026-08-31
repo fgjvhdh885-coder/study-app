@@ -1,10 +1,6 @@
 /* =========================================================================
    STUDY SMART — ENHANCED UI v2.0 (React + Firebase)
-   Design System: Modern, Motivational, Clean
    ========================================================================= */
-
-// ─── GOOGLE FONTS (أضفها في index.html) ────────────────────────────────
-// <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 const T = {
   dark: {
@@ -34,11 +30,9 @@ const T = {
 };
 
 // ========================================================================
-// 🔥 إعدادات Firebase (ضع بياناتك هنا من Console)
+// 🔥 Firebase Setup
 // ========================================================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const { initializeApp, getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, getFirestore, doc, setDoc, getDoc, collection, getDocs } = window.FirebaseApp;
 
 const firebaseConfig = {
   apiKey: "AIzaSyB-vkTesMW6ONIZKW31hfWzbu",
@@ -46,15 +40,13 @@ const firebaseConfig = {
   projectId: "zaker-1de07",
   storageBucket: "zaker-1de07.firebasestorage.app",
   messagingSenderId: "525017383794",
-  appId: "1:525017383794:web:342adb2ae974",
+  appId: "1:525017383794:web:342adb2ae974d7872b93eb",
   measurementId: "G-R86QCRXPBN"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// ─── End of Firebase ────────────────────────────────────────────────────
 
 const { useState, useEffect, useRef, useCallback } = React;
 
@@ -116,9 +108,6 @@ const ACHIEVEMENTS = [
   { id: "fixed_weakness", label: "متغلب", icon: "💪", desc: "تغلبت على نقطة ضعف", check: (p) => p.history.some((h) => h.improvementFlag) },
 ];
 
-// ========================================================================
-// 🔥 دوال Firebase المحدثة (بدل localStorage)
-// ========================================================================
 async function loadProfile() {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, async (user) => {
@@ -137,7 +126,7 @@ async function loadProfile() {
           resolve({ ...DEFAULT_PROFILE, name: user.displayName, username: user.uid });
         }
       } else {
-        resolve(null); // لا يوجد مستخدم مسجل
+        resolve(null);
       }
     });
   });
@@ -187,8 +176,6 @@ async function logout() {
   await signOut(auth);
 }
 
-// ─── نهاية دوال Firebase ────────────────────────────────────────────────
-
 async function callClaude(system, userText, maxTokens = 1000) {
   const res = await fetch("/api/ai", {
     method: "POST",
@@ -208,8 +195,7 @@ function extractJSON(text) {
   try { return JSON.parse(cleaned.slice(start, end + 1)); } catch (e) { return null; }
 }
 
-// ─── UI COMPONENTS (Enhanced) ───────────────────────────────────────────
-
+// ─── UI COMPONENTS ──────────────────────────────────────────────────────
 function Bar({ pct, color, height = 8, bg, gradient }) {
   const theme = T.dark;
   return (
@@ -297,7 +283,7 @@ function Btn({ children, onClick, tone = "ember", full, disabled, ghost, size })
 }
 
 function useTheme() {
-  return T.dark; // ثيم داكن فقط
+  return T.dark;
 }
 
 function ThemeToggle() {
@@ -335,7 +321,6 @@ function Field({ label, children }) { const theme = T.dark; return (<div><div st
 function useInputStyle() { const theme = T.dark; return { ...inpStyleBase, background: theme.bgSoft, border: `1px solid ${theme.cardBorder}`, color: theme.ink }; }
 
 // ─── SCREENS ────────────────────────────────────────────────────────────
-
 function Home({ profile, onStart, onQuickFix, nav }) {
   const theme = T.dark;
   const lvl = levelFromXP(profile.xp);
@@ -514,7 +499,7 @@ const TYPE_LABEL = { direct: "سؤال مباشر", understanding: "سؤال ف�
 const TYPE_ICONS = { direct: "📌", understanding: "💡", application: "🔧", reasoning: "🔍", spot_error: "🎯", recall: "🧠" };
 
 function buildAdaptiveSystemPrompt(session, questionCount) {
-  return `أنت محرك اختبار تكيفي داخل تطبيق مذاكرة. المادة: ${session.subject}. الدرس: ${session.lesson}. الصف: ${session.grade || "مراجعة"}. عدد الأسئلة: ${questionCount}.
+  return `أنت محرك اختبار تكيفي داخل تطبيق مذاكرة. المادة: ${session.subject}. الدرس: ${session.lesson}. عدد الأسئلة: ${questionCount}.
 أول استدعاء: eval=null. لكل استدعاء قيم الإجابة (correct/partial/incorrect). لو محتاج أسئلة ولّد next. لو خلصت اعمل done=true و finalSkills.
 أرجع JSON فقط: {"eval":{"verdict":"","feedback":"","concept":"","misconception":null}|null,"next":{"question":"","type":"","difficulty":"","concept":"","plantedAnswer":null}|null,"done":false,"finalSkills":null,"confidence":0,"summaryNote":"","conceptMap":[]}`;
 }
@@ -707,7 +692,7 @@ function Coach({ profile }) {
   );
 }
 
-// ─── APP ROOT (مع تسجيل الدخول) ─────────────────────────────────────────
+// ─── APP ROOT ───────────────────────────────────────────────────────────
 
 function App() {
   const [profile, setProfile] = useState(null);
