@@ -16,22 +16,7 @@ if (!API_KEY) {
   console.warn("تحذير: متغير البيئة GEMINI_API_KEY مش متحدد.");
 }
 
-const hits = new Map();
-const WINDOW_MS = 60 * 1000;
-const MAX_REQ = 8;
-function rateLimit(req, res, next) {
-  const ip = req.ip;
-  const now = Date.now();
-  const arr = (hits.get(ip) || []).filter((t) => now - t < WINDOW_MS);
-  if (arr.length >= MAX_REQ) {
-    return res.status(429).json({ error: "طلبات كتير أوي، حاول تاني بعد شوية." });
-  }
-  arr.push(now);
-  hits.set(ip, arr);
-  next();
-}
-
-app.post("/api/ai", rateLimit, async (req, res) => {
+app.post("/api/ai", async (req, res) => {
   try {
     if (!API_KEY) return res.status(500).json({ error: "السيرفر مش متظبط بمفتاح API لسه." });
     const { system, userText, maxTokens, imageBase64 } = req.body || {};
