@@ -4,15 +4,14 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-
-// مهم جداً: حجم الصور من الكاميرا كبير، لازم نرفع الحد لـ 50mb
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+
 if (!API_KEY) {
   console.warn("تحذير: متغير البيئة GEMINI_API_KEY مش متحدد.");
 }
@@ -37,14 +36,12 @@ app.post("/api/ai", rateLimit, async (req, res) => {
     if (!API_KEY) return res.status(500).json({ error: "السيرفر مش متظبط بمفتاح API لسه." });
     const { system, userText, maxTokens, imageBase64 } = req.body || {};
     
-    // لو مفيش نص وهناك صورة، هو ده اللي هيحصل:
-    // نقوم بتحويل الصورة لنظام Gemini Vision
     const parts = [];
     if (imageBase64) {
       parts.push({
         inline_data: {
           mime_type: "image/jpeg",
-          data: imageBase64.split(",")[1] // نحذف الـ header عشان Gemini يفهم
+          data: imageBase64.split(",")[1]
         }
       });
     }
@@ -105,7 +102,6 @@ app.post("/api/leaderboard", (req, res) => {
   res.json({ ok: true });
 });
 
-// جزء مهم جداً: لو فتحت React بعد الـ Build، ده هيشغله مع السيرفر
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
