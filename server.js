@@ -4,7 +4,10 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-app.use(express.json({ limit: "2mb" }));
+
+// مهم جداً: حجم الصور من الكاميرا كبير، لازم نرفع الحد لـ 50mb
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
@@ -32,8 +35,24 @@ function rateLimit(req, res, next) {
 app.post("/api/ai", rateLimit, async (req, res) => {
   try {
     if (!API_KEY) return res.status(500).json({ error: "السيرفر مش متظبط بمفتاح API لسه." });
-    const { system, userText, maxTokens } = req.body || {};
-    if (!userText) return res.status(400).json({ error: "userText مطلوب." });
+    const { system, userText, maxTokens, imageBase64 } = req.body || {};
+    
+    // لو مفيش نص وهناك صورة، هو ده اللي هيحصل:
+    // نقوم بتحويل الصورة لنظام Gemini Vision
+    const parts = [];
+    if (imageBase64) {
+      parts.push({
+        inline_data: {
+          mime_type: "image/jpeg",
+          data: imageBase64.split(",")[1] // نحذف الـ header عشان Gemini يفهم
+        }
+      });
+    }
+    if (userText) {
+      parts.push({ text: String(userText).slice(0, 8000) });
+    }
+
+    if (parts.length === 0) return res.status(400).json({ error: "userText أو imageBase64 مطلوب." });
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
     const response = await fetch(url, {
@@ -41,7 +60,7 @@ app.post("/api/ai", rateLimit, async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         system_instruction: system ? { parts: [{ text: system }] } : undefined,
-        contents: [{ role: "user", parts: [{ text: String(userText).slice(0, 8000) }] }],
+        contents: [{ role: "user", parts }],
         generationConfig: { maxOutputTokens: Math.min(Math.max(maxTokens || 800, 100), 2000) },
       }),
     });
@@ -84,6 +103,11 @@ app.post("/api/leaderboard", (req, res) => {
   db[username] = { username, xp: xp || 0, level: level || 1, rating: rating || 0, streak: streak || 0 };
   writeLeaderboard(db);
   res.json({ ok: true });
+});
+
+// جزء مهم جداً: لو فتحت React بعد الـ Build، ده هيشغله مع السيرفر
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(PORT, () => {
