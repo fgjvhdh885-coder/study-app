@@ -10,7 +10,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 if (!API_KEY) {
   console.warn("تحذير: متغير البيئة GEMINI_API_KEY مش متحدد.");
@@ -20,7 +20,7 @@ app.post("/api/ai", async (req, res) => {
   try {
     if (!API_KEY) return res.status(500).json({ error: "السيرفر مش متظبط بمفتاح API لسه." });
     const { system, userText, maxTokens, imageBase64 } = req.body || {};
-    
+
     const parts = [];
     if (imageBase64) {
       parts.push({
